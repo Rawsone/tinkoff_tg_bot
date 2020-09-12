@@ -21,13 +21,10 @@ start = 'Старт'
 cont = 'Продолжим!'
 later = 'Давай позже'
 
-
-
 wanna_play = 'Хочешь поиграть ещё раз?'
 
 play_keyboard = t.InlineKeyboardMarkup(row_width=2)
-play_keyboard.row(t.InlineKeyboardButton(quiz, callback_data='quiz'),
-                  t.InlineKeyboardButton(study, callback_data='study'),
+play_keyboard.row(t.InlineKeyboardButton(play, callback_data='play'),
                   t.InlineKeyboardButton(not_yet, callback_data='not_yet'))
 
 start_keyboard = t.InlineKeyboardMarkup(row_width=2)
@@ -84,7 +81,7 @@ questions = [
     ['Послушай музыкальную композицию и определи, кем она создана ИИ или человеком?',
      ('Искусственным интеллектом',
       'Ты прав, это композиция из альбома "I AM AI", что переводится с английского, как "Я искусственный интеллект". '
-      'Все треки в нём помогала создавать программа с искусственным интеллектом.' 
+      'Все треки в нём помогала создавать программа с искусственным интеллектом.'
       'Погугли и ты найдешь другие треки из этого альбома.'),
      ('Человеком', 'В это трудно поверить, но мелодия создана ИИ. '
                    'Это композиция из альбома "I AM AI", что переводится с '
@@ -196,8 +193,8 @@ def last_words(score, name):
     elif score > 3:
         return '{}, поздравляю, ты на правильном пути. Я тебе дам пару ссылок. ' \
                'Думаю, тебе будет интересно узнать больше о возможностях ИИ и технологиях будущего.' \
-               '\nhttps://sk.ru/news/iskusstvennyy-intellekt-v-sovremennom-iskusstve/'\
-               '\nhttps://kanobu.ru/articles/iskusstvennyij-intellekt-buduschee-tsivilizatsii-ili-ee-ubijtsa-369258/'\
+               '\nhttps://sk.ru/news/iskusstvennyy-intellekt-v-sovremennom-iskusstve/' \
+               '\nhttps://kanobu.ru/articles/iskusstvennyij-intellekt-buduschee-tsivilizatsii-ili-ee-ubijtsa-369258/' \
                '\nhttps://dtf.ru/science/41917-sovremennoe-sostoyanie-iskusstvennogo-intellekta '.format(name)
 
     return '{} - здорово, что ты интересуешься ИИ! ' \
