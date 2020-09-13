@@ -8,6 +8,10 @@ from data import *
 bot = telebot.TeleBot(TOKEN)
 
 
+def greetings_score(name, score):
+    return f'Привет, {name}. У тебя {score} очков за прохождение квизов! Предлагаю тебе'
+
+
 def play_keyboard(daily_quiz_done=False):
     play_keyboard = t.InlineKeyboardMarkup(row_width=2)
     if not daily_quiz_done:
@@ -36,9 +40,32 @@ def question_keyboard(num, question, is_daily):
 
 @bot.callback_query_handler(func=lambda c: c.data == 'leaderboard')
 def get_leaderboard(call):
-    bot.send_message(call.message.chat.id, '\n'.join([f'{i + 1}) {user["name"]} - {user["daily_quiz_score"]} points' for i, user in
-                                                 enumerate(
-                                                     sorted(database.values(), key=lambda x: -x['daily_quiz_score']))]))
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    bot.send_message(call.message.chat.id, 'Список лидеров ежедневного теста:'
+                     '\n'.join([f'{i + 1}) {user["name"]} - {user["daily_quiz_score"]} points' for i, user in
+                                enumerate(
+                                    sorted(database.values(), key=lambda x: -x['daily_quiz_score']))]),
+                     reply_markup=back_keyboard)
+
+
+@bot.callback_query_handler(func=lambda c: c.data == 'back')
+def return_start(call):
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    if call.message.chat.id not in database:
+
+        bot.send_message(call.message.chat.id, welcome)
+
+        bot.register_next_step_handler(call.message, enter_name)
+
+    else:
+        name = database[call.message.chat.id]['name']
+        if 'study_score' in database[call.message.chat.id]:
+            score = database[call.message.chat.id]['study_score']
+        else:
+            score = 0
+        bot.send_message(call.message.chat.id,
+                         greetings_score(name, score),
+                         reply_markup=play_keyboard('daily_quiz_done' in database[call.message.chat.id]))
 
 
 @bot.message_handler(commands=['start'])
@@ -51,8 +78,12 @@ def start(message: t.Message):
 
     else:
         name = database[message.chat.id]['name']
+        if 'study_score' in database[message.chat.id]:
+            score = database[message.chat.id]['study_score']
+        else:
+            score = 0
         bot.send_message(message.chat.id,
-                         greetings.format(name),
+                         greetings_score(name, score),
                          reply_markup=play_keyboard('daily_quiz_done' in database[message.chat.id]))
 
 
@@ -95,7 +126,7 @@ def start(call: t.CallbackQuery):
 def start_daily_quiz(call: t.CallbackQuery):
     if 'daily_quiz_done' not in database[call.message.chat.id]:
         database[call.message.chat.id]['daily_quiz_done'] = True
-        database[call.message.chat.id]['game'] = sample(range(len(questions)), LEN)
+        database[call.message.chat.id]['game'] = list(range(len(questions)))
         database[call.message.chat.id]['daily_quiz_score'] = 0
 
         next_question(call.message)
@@ -122,7 +153,7 @@ def next_lesson(call: t.CallbackQuery):
                                    reply_markup=lesson_keyboard)
             else:
                 bot.send_message(message.chat.id, lesson[1].format(name),
-                                 reply_markup=play_keyboard('daily_quiz_done' in database[message.chat.id]))
+                                 reply_markup=lesson_keyboard)
         else:
             if os.path.isfile(f'media/{num + 1}-q.jpg'):
                 with open(f'media/{num + 1}-q.jpg', 'rb') as f:
@@ -150,7 +181,7 @@ def next_question(call: t.CallbackQuery):
     game = database[message.chat.id]['game']
 
     if game:
-        num = game.pop()
+        num = game.pop(0)
         question = questions[num]
 
         print(name, 'отвечает на вопрос ', num + 1)
@@ -162,7 +193,7 @@ def next_question(call: t.CallbackQuery):
                                reply_markup=question_keyboard(num, questions[num], is_daily=True))
         else:
             bot.send_message(message.chat.id, question[0].format(name),
-                           reply_markup=question_keyboard(num, questions[num], is_daily=True))
+                             reply_markup=question_keyboard(num, questions[num], is_daily=True))
 
     else:
         score = database[message.chat.id]['daily_quiz_score']
@@ -193,7 +224,7 @@ def answer(call: t.CallbackQuery):
                            reply_markup=cont_lesson_keyboard)
     else:
         bot.send_message(call.message.chat.id,
-                         questions[num][ans + 2][1].format(name),
+                         lessons[num][ans + 2][1].format(name),
                          reply_markup=cont_lesson_keyboard)
 
 
